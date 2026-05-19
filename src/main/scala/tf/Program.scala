@@ -45,40 +45,34 @@ object Program:
 
   // печать накопленных в Logger строк
   private def flushAndPrint[F[_]: Monad](using c: Console[F], log: Logger[F]): F[Unit] =
-    val F = summon[Monad[F]]
     log.take.flatMap { lines =>
-      lines.foldLeft(F.pure(())) { (acc, line) =>
-        acc.flatMap(_ => c.writeLine("  " + line))
-      }
+      if lines.isEmpty then summon[Monad[F]].pure(())
+      else c.writeLine(lines.map("  " + _).mkString("\n"))
     }
 
   // ----- сценарии -----
 
-  def showTrainsScenario[F[_]: Monad](using
-      c: Console[F], trains: TrainRepo[F]
-  ): F[Unit] =
-    val F = summon[Monad[F]]
+  def showTrainsScenario[F[_]: Monad](using c: Console[F], trains: TrainRepo[F]): F[Unit] =
     trains.all.flatMap { ts =>
       if ts.isEmpty then c.writeLine("  поездов нет")
       else
-        ts.zipWithIndex.foldLeft(F.pure(())) { case (acc, (t, i)) =>
+        val lines = ts.zipWithIndex.map { case (t, i) =>
           val free = t.seats.count { case (_, occ) => !occ }
-          acc.flatMap(_ => c.writeLine(s"  ${i + 1}. ${t.name} | ${t.route} | свободно: $free/${t.seats.size}"))
+          s"  ${i + 1}. ${t.name} | ${t.route} | свободно: $free/${t.seats.size}"
         }
+        c.writeLine(lines.mkString("\n"))
     }
 
   def showTicketsScenario[F[_]: Monad](using
       c: Console[F], tickets: TicketRepo[F]
   ): F[Unit] =
-    val F = summon[Monad[F]]
     tickets.all.flatMap { ts =>
       if ts.isEmpty then c.writeLine("  билетов нет")
       else
-        ts.foldLeft(F.pure(())) { (acc, t) =>
-          acc.flatMap(_ => c.writeLine(
-            s"  #${t.id} ${t.trainName} ${t.route} ${t.classType} место=${t.seat} цена=${t.price} багаж=${t.baggageCost}"
-          ))
+        val lines = ts.map { t =>
+          s"  #${t.id} ${t.trainName} ${t.route} ${t.classType} место=${t.seat} цена=${t.price} багаж=${t.baggageCost}"
         }
+        c.writeLine(lines.mkString("\n"))
     }
 
   def bookScenario[F[_]: Monad](cfg: TicketConfig)(using

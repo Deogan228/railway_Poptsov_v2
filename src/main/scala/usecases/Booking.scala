@@ -14,7 +14,8 @@ object Booking:
   // в Logger[F]
   private def flushLog[F[_]: Monad](lines: List[String])(using logger: Logger[F]): F[Unit] =
     val F = summon[Monad[F]]
-    lines.foldLeft(F.pure(()))((acc, line) => acc.flatMap(_ => logger.add(line)))
+    if lines.isEmpty then F.pure(())
+    else lines.map(logger.add).reduce((a, b) => a.flatMap(_ => b))
 
   // ============ бронь билета ============
   // 4 возможных ошибки: касса закрыта, поезда нет, место недоступно, нет тарифа.
