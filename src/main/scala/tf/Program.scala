@@ -4,6 +4,7 @@ import monads.{*, given}
 import domain.{TicketConfig, ClassType, Train}
 import algebras.*
 import errors.*
+import errors.given
 import usecases.Booking
 
 // сценарии действий меню в TF-стиле.

@@ -1,19 +1,5 @@
-[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E172] Type Error: D:\fp\railway_Poptsov_v2\src\main\scala\tf\Program.scala:111:97 [0m[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m111 |[0m                  res     <- Booking.bookTicket[F, AppError](train.name, seat, cls, baggage, cfg)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                                                                 ^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNo given instance of type errors.OfficeClosed[errors.AppError] was found for parameter closedErr of [33mmethod[0m [35mbookTicket[0m in [33mobject[0m [35mBooking[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNote: [33mobject[0m [35mgiven_OfficeClosed_AppError[0m in [33mpackage[0m [35merrors[0m was not considered because it was not imported with `import given`.[0m
-[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E172] Type Error: D:\fp\railway_Poptsov_v2\src\main\scala\tf\Program.scala:135:61 [0m[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m135 |[0m            res <- Booking.cancelTicket[F, AppError](id, cfg)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                             ^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNo given instance of type errors.OfficeClosed[errors.AppError] was found for parameter closedErr of [33mmethod[0m [35mcancelTicket[0m in [33mobject[0m [35mBooking[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNote: [33mobject[0m [35mgiven_OfficeClosed_AppError[0m in [33mpackage[0m [35merrors[0m was not considered because it was not imported with `import given`.[0m
-[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E172] Type Error: D:\fp\railway_Poptsov_v2\src\main\scala\tf\Program.scala:153:51 [0m[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m153 |[0m      res   <- Booking.addTrain[F, AppError](train)[0m
-[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                   ^[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNo given instance of type errors.TrainAlreadyExists[errors.AppError] was found for parameter existsErr of [33mmethod[0m [35maddTrain[0m in [33mobject[0m [35mBooking[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
-[0m[[0m[31merror[0m] [0m[0m[31m    |[0mNote: [33mobject[0m [35mgiven_TrainAlreadyExists_AppError[0m in [33mpackage[0m [35merrors[0m was not considered because it was not imported with `import given`.[0m
-[0m[[0m[31merror[0m] [0m[0mthree errors found[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- Error: D:\fp\railway_Poptsov_v2\src\main\scala\interpreters\IdInterpreters.scala:22:8 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m22 |[0m  [33mclass[0m [35mIdLogger[0m [33mextends[0m [35mLogger[0m[[35mId[0m]:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m        ^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0mclass IdLogger needs to be abstract, since def addAll(lines: List[String]): F[Unit] in [33mtrait[0m [35mLogger[0m in [33mpackage[0m [35malgebras[0m is not defined [0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m

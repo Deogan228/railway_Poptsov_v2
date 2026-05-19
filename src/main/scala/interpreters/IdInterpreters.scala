@@ -22,6 +22,7 @@ object IdInterpreters:
   class IdLogger extends Logger[Id]:
     private val buf = scala.collection.mutable.ArrayBuffer.empty[String]
     def add(line: String): Unit = buf += line
+    def addAll(lines: List[String]): Unit = lines.foreach(buf += _)
     def take: List[String] =
       val lines = buf.toList
       buf.clear()
