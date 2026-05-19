@@ -1,6 +1,6 @@
 package tf
 
-import monads.{Monad, given}
+import monads.{*, given}
 import domain.{TicketConfig, ClassType, Train}
 import algebras.*
 import errors.*

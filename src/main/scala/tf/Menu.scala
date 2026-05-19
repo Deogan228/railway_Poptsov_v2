@@ -1,6 +1,6 @@
 package tf
 
-import monads.{Monad, given}
+import monads.{*, given}
 import algebras.Console
 
 // дерево меню, параметризованное F[_].

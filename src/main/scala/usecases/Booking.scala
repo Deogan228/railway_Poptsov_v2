@@ -1,6 +1,6 @@
 package usecases
 
-import monads.{Monad, given}
+import monads.{*, given}
 import domain.{TicketConfig, ClassType, Train, Ticket, Pricing}
 import algebras.*
 import errors.*
