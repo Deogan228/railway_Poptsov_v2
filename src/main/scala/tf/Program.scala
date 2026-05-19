@@ -88,28 +88,25 @@ object Program:
     for
       _           <- showTrainsScenario[F]
       trainNumOpt <- readIntOpt[F]("Номер поезда: ")
-      _ <- trainNumOpt match
+      ts          <- trains.all
+      train        = trainNumOpt.flatMap(n => ts.lift(n - 1))
+      _           <- train match
         case None =>
-          c.writeLine("  ошибка: номер поезда не указан")
-        case Some(num) =>
-          trains.all.flatMap { ts =>
-            ts.lift(num - 1) match
-              case None => c.writeLine("  ошибка: поезд не выбран")
-              case Some(train) =>
-                val free = train.seats.filter { case (_, o) => !o }.keys.toList.sorted
-                for
-                  _       <- c.writeLine(s"Свободные места: ${free.mkString(", ")}")
-                  seat    <- readStr[F]("Место: ")
-                  clsStr  <- readStr[F]("Класс (economy/business): ")
-                  cls      = parseClassType(clsStr)
-                  baggage <- readDouble[F]("Вес багажа кг (0 если нет): ", Defaults.NoBaggageWeight)
-                  res     <- Booking.bookTicket[F, AppError](train.name, seat, cls, baggage, cfg)
-                  _       <- flushAndPrint[F]
-                  _       <- res match
-                    case Right(t) => c.writeLine(s"  => билет #${t.id} оформлен")
-                    case Left(e)  => c.writeLine(s"  ошибка: ${render(e)}")
-                yield ()
-          }
+          c.writeLine("  ошибка: поезд не выбран")
+        case Some(t) =>
+          val free = t.seats.filter { case (_, o) => !o }.keys.toList.sorted
+          for
+            _       <- c.writeLine(s"Свободные места: ${free.mkString(", ")}")
+            seat    <- readStr[F]("Место: ")
+            clsStr  <- readStr[F]("Класс (economy/business): ")
+            cls      = parseClassType(clsStr)
+            baggage <- readDouble[F]("Вес багажа кг (0 если нет): ", Defaults.NoBaggageWeight)
+            res     <- Booking.bookTicket[F, AppError](t.name, seat, cls, baggage, cfg)
+            _       <- flushAndPrint[F]
+            _       <- res match
+              case Right(ticket) => c.writeLine(s"  => билет #${ticket.id} оформлен")
+              case Left(e)       => c.writeLine(s"  ошибка: ${render(e)}")
+          yield ()
     yield ()
 
   def cancelScenario[F[_]: Monad](cfg: TicketConfig)(using
