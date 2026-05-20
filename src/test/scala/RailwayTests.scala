@@ -6,12 +6,6 @@ import interpreters.IdInterpreters
 import interpreters.IdInterpreters.given
 import usecases.Booking
 
-// Тесты бизнес-логики через Id-интерпретатор.
-// Главная фишка: те же самые функции Booking.bookTicket / cancelTicket / ...
-// можно проверить в чистом синхронном коде без всякого IO, без StdIn — просто
-// вызовом и assert'ом на результат.
-//
-// запуск: sbt "Test / runMain RailwayTests"
 object RailwayTests:
   def main(args: Array[String]): Unit =
 

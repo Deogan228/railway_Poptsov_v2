@@ -4,24 +4,23 @@ import monads.{*, given}
 import algebras.Console
 
 // дерево меню, параметризованное F[_].
-// каждая опция — либо лист с действием, либо вложенное поддерево.
 sealed trait MenuOption[F[_]]:
   def title: String
 
-case class MenuLeaf[F[_]](title: String, action: () => F[Unit]) extends MenuOption[F]
-case class MenuTreeNode[F[_]](title: String, options: Seq[MenuOption[F]]) extends MenuOption[F]
+case class MenuLeaf[F[_]](title: String, action: () => F[Unit]) extends MenuOption[F] //либо лист с действием
+case class MenuTreeNode[F[_]](title: String, options: Seq[MenuOption[F]]) extends MenuOption[F] //либо вложенное поддерево
 
 object Menu:
-  val ExitCommand = 0
+  val ExitCommand = 0 //константа для выхода
 
   // рекурсивный цикл: показать -> прочитать -> обработать -> повторить.
-  // headerSuffix — динамическая часть заголовка (выручка, статус кассы).
   def loop[F[_]: Monad](
       node: MenuTreeNode[F],
-      headerSuffix: () => F[String]
+      headerSuffix: () => F[String] //функция которая возвращает динамическую строку для заголовка, например, с текущей выручкой
   )(using console: Console[F]): F[Unit] =
     val F = summon[Monad[F]]
 
+    //получаем суффикс, формируем и показываем меню
     def show: F[Unit] =
       for
         suf <- headerSuffix()
@@ -31,13 +30,13 @@ object Menu:
         _ <- console.write(s"\n${node.title}$suf\n$items\n  $ExitCommand  выход\n  выбор: ")
       yield ()
 
+    //выполняем пункт по индексу
     def execAt(idx: Int): F[Unit] =
       node.options(idx) match
-        case MenuLeaf(_, action) => action()
-        // typed-pattern на параметризованный тип даёт unchecked-warning из-за erasure,
-        // но в нашем случае MenuTreeNode[F] получается из node.options того же F — безопасно
-        case sub: MenuTreeNode[?] => loop(sub.asInstanceOf[MenuTreeNode[F]], headerSuffix)
+        case MenuLeaf(_, action) => action() //вызываем действие
+        case sub: MenuTreeNode[?] => loop(sub.asInstanceOf[MenuTreeNode[F]], headerSuffix) //запускаем loop для подменю
 
+    //шаг: показать, прочитать, выполнить, вернуть флаг продолжения
     def step: F[Boolean] =
       for
         _     <- show
@@ -50,5 +49,6 @@ object Menu:
             console.writeLine("  неизвестная команда").map(_ => true)
       yield cont
 
+    //если step вернул true, повторяем, иначе выходим
     def iter: F[Unit] = step.flatMap(c => if c then iter else F.pure(()))
     iter

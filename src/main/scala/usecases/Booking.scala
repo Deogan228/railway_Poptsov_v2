@@ -5,29 +5,22 @@ import domain.{TicketConfig, ClassType, Train, Ticket, Pricing}
 import algebras.*
 import errors.*
 
-// Главная идея TF: бизнес-логика написана как функция в любой F с подходящими алгебрами.
-// Никакого IO, никакого State, никакого Reader — только F[_]: Monad и набор using-алгебр.
-// Какой F использовать (Id, IO, Future, ZIO...) решает точка сборки приложения.
 object Booking:
 
-  // вспомогательная функция: вылить накопленный лог чистых функций (Pricing.Logged)
-  // в Logger[F]
+  // вспомогательная функция: передаем список строк из Pricing в Logger[F]
   private def flushLog[F[_]: Monad](lines: List[String])(using logger: Logger[F]): F[Unit] =
     val F = summon[Monad[F]]
-    if lines.isEmpty then F.pure(())
-    else lines.map(logger.add).reduce((a, b) => a.flatMap(_ => b))
+    if lines.isEmpty then F.pure(()) //ниче не делаем если пустой
+    else lines.map(logger.add).reduce((a, b) => a.flatMap(_ => b)) //иначе преобразуем каждую строку в F[Unit] и последовательно выполняем все
 
-  // ============ бронь билета ============
-  // 4 возможных ошибки: касса закрыта, поезда нет, место недоступно, нет тарифа.
-  // E (тип ошибки) — параметр. use-case требует только что для E определены нужные
-  // конструкторы. конкретный AppError подставится в точке сборки.
-  def bookTicket[F[_]: Monad, E](
+
+  def bookTicket[F[_]: Monad, E]( //обычные параметры
       trainName: String,
       seat: String,
       classType: ClassType,
       baggageWeight: Double,
       cfg: TicketConfig
-  )(using
+  )(using //алгебры + конструкторы ошибок
       trains: TrainRepo[F],
       tickets: TicketRepo[F],
       revenue: Revenue[F],
@@ -38,33 +31,32 @@ object Booking:
       notFoundErr: TrainNotFound[E],
       seatErr: SeatUnavailable[E],
       tariffErr: NoTariff[E]
-  ): F[Either[E, Ticket]] =
-    val F = summon[Monad[F]]
+  ): F[Either[E, Ticket]] = // либо ошибка, либо проданный билет
 
-    // явная аннотация типа — помогает inferer'у Scala 3 не путаться с Either
-    type R = Either[E, Ticket]
+    val F = summon[Monad[F]] //достаем экземпляр монады
+    type R = Either[E, Ticket] //пвседоним для удобства
 
+    // проверяем, открыта ли касса
     office.isOpen.flatMap { open =>
       if !open then F.pure[R](Left(closedErr.officeClosed))
       else trains.find(trainName).flatMap {
-        case None =>
+        case None => //поезда нет
           log.add(s"Ошибка: поезд $trainName не найден").flatMap(_ =>
             F.pure[R](Left(notFoundErr.trainNotFound(trainName))))
-        case Some(train) =>
-          // чистые проверки из Pricing
+        case Some(train) => //нашли, вызываем функции, собираем в логи
           val seatRes  = Pricing.seatAvailable(cfg, train, seat)
           val priceRes = Pricing.ticketPrice(cfg, train.route, classType)
           val bagRes   = Pricing.baggageCost(cfg, baggageWeight)
           val allLog   = seatRes.log ++ priceRes.log ++ bagRes.log
 
-          flushLog(allLog).flatMap { _ =>
+          flushLog(allLog).flatMap { _ => //сбрасываем лог в Logger[F]
             if !seatRes.value then
-              F.pure[R](Left(seatErr.seatUnavailable(seat)))
+              F.pure[R](Left(seatErr.seatUnavailable(seat))) //место недоступно -> ошибка
             else priceRes.value match
-              case None        => F.pure[R](Left(tariffErr.noTariff(train.route)))
-              case Some(price) =>
+              case None        => F.pure[R](Left(tariffErr.noTariff(train.route))) //нет тарифа -> ошибка
+              case Some(price) => //все ок, оформляем билет
                 val ticket = Ticket(
-                  id            = 0, // подменим ниже
+                  id            = 0, 
                   trainName     = train.name,
                   route         = train.route,
                   classType     = classType,
@@ -85,7 +77,7 @@ object Booking:
       }
     }
 
-  // ============ отмена билета ============
+  // отмена билета
   def cancelTicket[F[_]: Monad, E](ticketId: Int, cfg: TicketConfig)(using
       tickets: TicketRepo[F],
       trains: TrainRepo[F],
@@ -99,11 +91,11 @@ object Booking:
     type R = Either[E, Double]
 
     office.isOpen.flatMap { open =>
-      if !open then F.pure[R](Left(closedErr.officeClosed))
-      else tickets.find(ticketId).flatMap {
+      if !open then F.pure[R](Left(closedErr.officeClosed)) //проверяем кассу
+      else tickets.find(ticketId).flatMap { //ищем билет
         case None         => F.pure[R](Left(notFoundErr.ticketNotFound(ticketId)))
         case Some(ticket) =>
-          val refundRes = Pricing.refundAmount(cfg, ticket)
+          val refundRes = Pricing.refundAmount(cfg, ticket) //считаем возврат
           for
             _ <- flushLog(refundRes.log)
             _ <- trains.setSeat(ticket.trainName, ticket.seat, false)
@@ -114,7 +106,7 @@ object Booking:
       }
     }
 
-  // ============ добавление поезда ============
+  // проверка наличия поезда, добавление нового поезда
   def addTrain[F[_]: Monad, E](train: Train)(using
       trains: TrainRepo[F],
       log: Logger[F],
@@ -131,8 +123,7 @@ object Booking:
         yield (Right(()): R)
     }
 
-  // ============ новый день ============
-  // сброс билетов и выручки, касса снова открыта
+  // сохраняем выручку в лог, очищаем билеты, сбрасываем выручку, открываем кассу
   def nextDay[F[_]: Monad](using
       tickets: TicketRepo[F],
       revenue: Revenue[F],
@@ -147,7 +138,7 @@ object Booking:
       _    <- log.add(s"Новый день. Выручка за вчера: $prev, билеты сброшены.")
     yield ()
 
-  // ============ закрытие кассы ============
+  // закрываем кассу, сохраняем в лог
   def closeOffice[F[_]: Monad](using
       office: OfficeOpen[F],
       log: Logger[F]

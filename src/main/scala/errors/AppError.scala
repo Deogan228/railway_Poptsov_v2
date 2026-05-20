@@ -1,7 +1,6 @@
 package errors
 
-// конкретная реализация ошибок: enum + given-инстансы алгебр выше
-
+//конкретный enum всех ошибок приложения
 enum AppError:
   case TrainNotFound(name: String)
   case SeatUnavailable(seat: String)
@@ -10,6 +9,7 @@ enum AppError:
   case OfficeClosed
   case TrainAlreadyExists(name: String)
 
+//связь между алгеброй ошибок и конкретным типом ошибок приложения
 given TrainNotFound[AppError] with
   def trainNotFound(name: String): AppError = AppError.TrainNotFound(name)
 
@@ -28,7 +28,7 @@ given OfficeClosed[AppError] with
 given TrainAlreadyExists[AppError] with
   def trainAlreadyExists(name: String): AppError = AppError.TrainAlreadyExists(name)
 
-// рендеринг ошибки в строку (для UI)
+// перевод ошибки в читаемую строку для отображения пользователю
 def render(e: AppError): String = e match
   case AppError.TrainNotFound(name)      => s"поезд $name не найден"
   case AppError.SeatUnavailable(seat)    => s"место $seat недоступно"

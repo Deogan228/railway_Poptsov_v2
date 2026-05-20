@@ -1,24 +1,16 @@
 package domain
 
-// Чистые функции тарификации.
-//
-// Раньше эти функции были Reader[TicketConfig, Writer[X]], но в TF Reader не нужен:
-// конфиг передаётся обычным параметром. Лог собирается отдельно, в виде List[String]
-// (use-case потом сольёт его в Logger[F]).
-//
-// Это сознательное упрощение: Reader/Writer заменены на явные параметры/возвращаемое
-// значение, потому что TF не нуждается в инкапсуляции окружения и эффекта лога.
 object Pricing:
 
   // результат расчёта + накопленный лог
   case class Logged[A](value: A, log: List[String])
 
-  // цена билета по тарифу
+  // ищем тариф по маршруту
   def ticketPrice(cfg: TicketConfig, route: String, classType: ClassType): Logged[Option[Double]] =
     cfg.tariffs.get(route) match
-      case None =>
+      case None => //если не нашли
         Logged(None, List(s"Тариф для маршрута $route не найден"))
-      case Some(t) =>
+      case Some(t) => //если нашли, берем нужную цену
         val price = classType match
           case ClassType.Economy  => t.economy
           case ClassType.Business => t.business

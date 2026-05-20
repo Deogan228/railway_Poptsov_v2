@@ -5,11 +5,9 @@ import interpreters.IdInterpreters
 import interpreters.IdInterpreters.given
 import tf.Program
 
-// Точка сборки приложения.
-// Здесь выбирается конкретный F (Id) и создаются все интерпретаторы алгебр.
-// Program.run полностью не знает что именно за F — это и есть Tagless Final.
+//создаем конфигурацию
 @main def main(): Unit =
-  val cfg = TicketConfig(
+  val cfg = TicketConfig( 
     tariffs = Map(
       "Moscow-SPb"   -> RouteTariff("Moscow-SPb",   2500, 5000),
       "Moscow-Kazan" -> RouteTariff("Moscow-Kazan", 1800, 3600),
@@ -20,9 +18,7 @@ import tf.Program
     refundPenaltyPercent = 0.15
   )
 
-  // интерпретаторы с начальным состоянием.
-  // часть given'ов уже определена в IdInterpreters (Console),
-  // часть создаём здесь с начальными данными.
+  // создаем алгебры и интерпретаторы, теперь компилятор знает, как работать с Id
   given Logger[Id]      = IdInterpreters.IdLogger()
   given IdSource[Id]    = IdInterpreters.IdIdSource(1)
   given OfficeOpen[Id]  = IdInterpreters.IdOfficeOpen(true)
@@ -33,5 +29,5 @@ import tf.Program
     Train("Express-2", "Moscow-Kazan", Train.makeSeats(3))
   ))
 
-  // Program.run[Id] возвращает Id[Unit] = Unit, выполняется синхронно
+  // запуск
   Program.run[Id](cfg)

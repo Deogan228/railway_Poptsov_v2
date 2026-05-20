@@ -1,8 +1,10 @@
 package domain
 
+//класс обслуживания
 enum ClassType:
   case Economy, Business
 
+//тариф по маршруту
 case class RouteTariff(
   route: String,
   economy: Double,
@@ -15,14 +17,14 @@ enum SeatRule:
   case Window, Aisle, Any
 
 // конфиг кассы — передаётся как обычный параметр в use-case,
-// без Reader-монады (TF не требует Reader, конфиг достаточно передать руками)
 case class TicketConfig(
-  tariffs: Map[String, RouteTariff],
-  baggagePerKg: Double,
-  seatRule: SeatRule,
-  refundPenaltyPercent: Double         // доля штрафа, напр. 0.15 = 15%
+  tariffs: Map[String, RouteTariff], // тарифы по маршрутам
+  baggagePerKg: Double, // стоимость багажа за килограмм
+  seatRule: SeatRule, // правило выбора места
+  refundPenaltyPercent: Double // доля штрафа, напр. 0.15 = 15%
 )
 
+//проданный билет 
 case class Ticket(
   id: Int,
   trainName: String,
@@ -34,7 +36,7 @@ case class Ticket(
   baggageCost: Double
 )
 
-// seats: место -> занято (true) или свободно (false)
+// поезд
 case class Train(
   name: String,
   route: String,
@@ -54,10 +56,3 @@ object Train:
       c <- Seq("A", "B", "C", "D")
     yield s"$r$c" -> false
     pairs.toMap
-
-// OfficeState больше нет — состояние разнесено по алгебрам:
-//   trains        → TrainRepo[F]
-//   soldTickets   → TicketRepo[F]
-//   revenue       → Revenue[F]
-//   nextTicketId  → IdSource[F]
-//   isOpen (новое) → OfficeOpen[F]
