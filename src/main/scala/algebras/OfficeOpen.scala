@@ -1,7 +1,6 @@
 package algebras
 
-// состояние кассы
 trait OfficeOpen[F[_]]:
-  def isOpen: F[Boolean] //открыта ли
-  def close: F[Unit] //закрыть
-  def open: F[Unit] //открыть
+  def isOpen: F[Boolean] 
+  def close: F[Unit] 
+  def open: F[Unit] 

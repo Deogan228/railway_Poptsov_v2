@@ -9,12 +9,10 @@ import usecases.Booking
 
 object Program:
 
-  // константы по умолчанию
   object Defaults:
     val NoBaggageWeight   = 0.0
     val DefaultTrainRows  = 10
 
-  // читаем строку, пробуем распарсить в Int, возвращаем Option
   private def readIntOpt[F[_]: Monad](prompt: String)(using c: Console[F]): F[Option[Int]] =
     for
       _ <- c.write(prompt)
@@ -36,20 +34,17 @@ object Program:
       s <- c.readLine
     yield s.trim
 
-  // парсим класс из строки
   private def parseClassType(input: String): ClassType =
     input.trim.toLowerCase match
       case "business" | "b" => ClassType.Business
       case _                => ClassType.Economy
 
-  // печать накопленных в Logger строк
   private def flushAndPrint[F[_]: Monad](using c: Console[F], log: Logger[F]): F[Unit] =
     log.take.flatMap { lines =>
       if lines.isEmpty then summon[Monad[F]].pure(())
       else c.writeLine(lines.map("  " + _).mkString("\n"))
     }
 
-  // сценарий для показа поездов, вызывается из меню
   def showTrainsScenario[F[_]: Monad](using c: Console[F], trains: TrainRepo[F]): F[Unit] =
     trains.all.flatMap { ts =>
       if ts.isEmpty then c.writeLine("  поездов нет")
@@ -61,7 +56,6 @@ object Program:
         c.writeLine(lines.mkString("\n"))
     }
 
-  // сценарий для показа билетов, вызывается из меню
   def showTicketsScenario[F[_]: Monad](using
       c: Console[F], tickets: TicketRepo[F]
   ): F[Unit] =
@@ -74,7 +68,6 @@ object Program:
         c.writeLine(lines.mkString("\n"))
     }
 
-  // сценарий для покупки билета, вызывается из меню
   def bookScenario[F[_]: Monad](cfg: TicketConfig)(using
       c: Console[F],
       trains: TrainRepo[F],
@@ -108,7 +101,6 @@ object Program:
           yield ()
     yield ()
 
-  // сценарий для возврата билета, вызывается из меню
   def cancelScenario[F[_]: Monad](cfg: TicketConfig)(using
       c: Console[F],
       trains: TrainRepo[F],
@@ -132,7 +124,6 @@ object Program:
           yield ()
     yield ()
 
-  // сценарий для добавления поезда, вызывается из меню
   def addTrainScenario[F[_]: Monad](using
       c: Console[F],
       trains: TrainRepo[F],
@@ -150,7 +141,6 @@ object Program:
         case Left(e)  => c.writeLine(s"  ошибка: ${render(e)}")
     yield ()
 
-  // сценарий для следующего дня, вызывается из меню
   def nextDayScenario[F[_]: Monad](using
       c: Console[F],
       tickets: TicketRepo[F],
@@ -163,7 +153,6 @@ object Program:
       _ <- flushAndPrint[F]
     yield ()
 
-  // сценарий для закрытия кассы, вызывается из меню
   def closeScenario[F[_]: Monad](using
       c: Console[F],
       office: OfficeOpen[F],
@@ -174,7 +163,6 @@ object Program:
       _ <- flushAndPrint[F]
     yield ()
 
-  // главный цикл программы, запускает меню
   def run[F[_]: Monad](cfg: TicketConfig)(using
       c: Console[F],
       trains: TrainRepo[F],
@@ -199,7 +187,6 @@ object Program:
       )
     )
 
-    // динамический суффикс заголовка: статус кассы + выручка
     def suffix: F[String] =
       for
         op  <- office.isOpen

@@ -1,11 +1,10 @@
-import monads.{Id, given}
+import monads.{App, given}
 import domain.{TicketConfig, RouteTariff, Train, SeatRule}
+import domain.AppState
+import interpreters.StateInterpreters.given
 import algebras.*
-import interpreters.IdInterpreters
-import interpreters.IdInterpreters.given
 import tf.Program
 
-//создаем конфигурацию
 @main def main(): Unit =
   val cfg = TicketConfig( 
     tariffs = Map(
@@ -18,16 +17,11 @@ import tf.Program
     refundPenaltyPercent = 0.15
   )
 
-  // создаем алгебры и интерпретаторы, теперь компилятор знает, как работать с Id
-  given Logger[Id]      = IdInterpreters.IdLogger()
-  given IdSource[Id]    = IdInterpreters.IdIdSource(1)
-  given OfficeOpen[Id]  = IdInterpreters.IdOfficeOpen(true)
-  given TicketRepo[Id]  = IdInterpreters.IdTicketRepo()
-  given Revenue[Id]     = IdInterpreters.IdRevenue()
-  given TrainRepo[Id]   = IdInterpreters.IdTrainRepo(List(
-    Train("Express-1", "Moscow-SPb",   Train.makeSeats(3)),
-    Train("Express-2", "Moscow-Kazan", Train.makeSeats(3))
-  ))
+  val initState = AppState(
+    trains = Map(
+      "Express-1" -> Train("Express-1", "Moscow-SPb",   Train.makeSeats(3)),
+      "Express-2" -> Train("Express-2", "Moscow-Kazan", Train.makeSeats(3))
+    )
+  )
 
-  // запуск
-  Program.run[Id](cfg)
+  val (finalState, _) = Program.run[App](cfg).run(initState)

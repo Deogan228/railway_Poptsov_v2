@@ -1,8 +1,5 @@
 package errors
 
-// Type-class ошибки. use-case требует только умение сконструировать ошибку,
-// не зная её конкретного типа. Какой именно E — решает интерпретатор / точка сборки.
-
 trait TrainNotFound[E]:
   def trainNotFound(name: String): E
 
